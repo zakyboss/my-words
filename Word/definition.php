@@ -1,7 +1,7 @@
 <?php
 
 function grab_json_definition($word, $ref, $key) {
-    $uri = "https://dictionaryapi.com/api/v3/references/" . urlencode($ref) . "/json/" . urlencode($word) . "?key=" . urlencode($key);
+    $uri = "" . urlencode($ref) . "/json/" . urlencode($word) . "?key=" . urlencode($key);
     $response = @file_get_contents($uri);
 
     if ($response === FALSE) {
@@ -19,7 +19,7 @@ function grab_json_definition($word, $ref, $key) {
 
 if (isset($_GET['word'])) {
     $word = $_GET['word'];
-    $definition = grab_json_definition($word, "learners", "c49e65a6-53cd-4c9b-b260-999022a132d9");
+    $definition = grab_json_definition($word, "learners", "");
     echo $definition;
 } else {
     echo json_encode(["error" => "No word provided"]);
