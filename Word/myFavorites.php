@@ -65,9 +65,10 @@ include 'db.php';
         <h1>Favorite Words</h1>
         <div class="results">
             <?php
-            $result = $conn->query("SELECT word, definition FROM my_favorites ORDER BY created_at DESC");
-            if ($result->num_rows > 0) {
-                while($row = $result->fetch_assoc()) {
+            $result = pg_query($conn, "SELECT word, definition FROM my_favorites ORDER BY created_at DESC");
+
+            if (pg_num_rows($result) > 0) {
+                while ($row = pg_fetch_assoc($result)) {
                     echo "<p><strong>{$row['word']}</strong>: <span>{$row['definition']}</span></p>";
                 }
             } else {
