@@ -1,0 +1,135 @@
+<?php
+session_start();
+require_once 'db.php'; // Ensure this file correctly initializes $con
+
+// Check if the user is logged in
+if (!isset($_SESSION['user'])) {
+    header('Location: login.php');
+    exit();
+}
+
+$user = $_SESSION['user'];
+
+// Handle form submission for profile picture update
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES['profilePic'])) {
+    $photo = $_FILES['profilePic'];
+    $uploadDir = __DIR__ . '/Uploads/';
+
+    if (!file_exists($uploadDir)) {
+        mkdir($uploadDir, 0777, true); // Create directory if it doesn't exist
+    }
+
+    if ($photo['error'] == UPLOAD_ERR_OK) {
+        $fileName = uniqid() . '_' . basename($photo['name']);
+        $uploadPath = $uploadDir . $fileName;
+
+        if (move_uploaded_file($photo['tmp_name'], $uploadPath)) {
+            // File uploaded successfully, update the database
+            $relativePath = 'Uploads/' . $fileName;
+            $sql = "UPDATE formdetails SET profilePic = ? WHERE username = ?";
+
+            if ($stmt = mysqli_prepare($con, $sql)) {
+                mysqli_stmt_bind_param($stmt, "ss", $relativePath, $user['username']);
+
+                if (mysqli_stmt_execute($stmt)) {
+                    // Update session data
+                    $_SESSION['user']['profilePic'] = $fileName; // Store only the filename
+                    echo "<script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                Swal.fire({
+                                    title: 'Success!',
+                                    text: 'Profile picture updated successfully.',
+                                    icon: 'success',
+                                    confirmButtonText: 'OK'
+                                }).then(() => {
+                                    window.location.href = 'home.php';
+                                });
+                            });
+                          </script>";
+                } else {
+                    echo "ERROR: Could not execute query: $sql. " . mysqli_error($con);
+                }
+
+                mysqli_stmt_close($stmt);
+            } else {
+                echo "ERROR: Could not prepare query: $sql. " . mysqli_error($con);
+            }
+        } else {
+            echo "Failed to upload file. Error: " . error_get_last()['message'];
+        }
+    } else {
+        echo "Failed to upload file. Error: " . $photo['error'];
+    }
+
+    mysqli_close($con);
+}
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Update Profile Picture</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<style>
+    body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.profile-container {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.profile-container h2 {
+    margin-bottom: 20px;
+}
+
+.profile-container label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.profile-container input[type="file"] {
+    margin-bottom: 20px;
+}
+
+.profile-container button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.profile-container button:hover {
+    background-color: #45a049;
+}
+
+</style>
+</head>
+<body>
+    <div class="profile-container">
+        <h2>Update Profile Picture</h2>
+        <form action="profile.php" method="post" enctype="multipart/form-data">
+            <label for="profilePic">Choose a profile picture:</label>
+            <input type="file" name="profilePic" id="profilePic" required>
+            <button type="submit">Update Profile Picture</button>
+        </form>
+    </div>
+</body>
+</html>
