@@ -1,14 +1,19 @@
 <?php
 $servername = "localhost";
-$username = "root";
+$username = "postgres";
 $password = "";
 $dbname = "word";
 
+// Create connection string
+$conn_string = "host=$servername dbname=$dbname user=$username password=$password";
+
 // Create connection
-$conn = new mysqli($servername, $username, $password, $dbname);
+$conn = pg_connect($conn_string);
 
 // Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+if (!$conn) {
+    die("Connection failed: " . pg_last_error());
+} else {
+    echo "Connected successfully!";
 }
 ?>
